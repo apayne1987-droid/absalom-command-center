@@ -17,6 +17,18 @@ services:
       redis:
         condition: service_started
 
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: absalom-command-center-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+    depends_on:
+      - api
+
   postgres:
     image: postgres:16
     container_name: absalom-command-center-postgres
