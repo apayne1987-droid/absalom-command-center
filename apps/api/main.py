@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from apps.api.routes.auth_routes import router as auth_router
 from apps.api.routes.protected_routes import router as protected_router
+from apps.api.routes.websocket_routes import router as websocket_router
 
 from apps.api.routes.execution_log_routes import router as execution_log_router
 from apps.api.routes.metrics_routes import router as metrics_router
@@ -33,6 +34,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(protected_router)
+app.include_router(websocket_router)
 app.include_router(workflow_router)
 app.include_router(task_router)
 app.include_router(execution_log_router)
@@ -67,5 +69,6 @@ async def runtime_status():
         "version": settings.app_version,
         "environment": settings.environment,
     }
+
 
 
