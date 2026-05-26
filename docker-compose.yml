@@ -6,11 +6,10 @@ services:
     container_name: absalom-command-center-api
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
       - PYTHONPATH=/app
-      - ENVIRONMENT=development
-      - DATABASE_URL=postgresql+asyncpg://absalom:absalom@postgres:5432/absalom_command_center
-      - REDIS_URL=redis://redis:6379/0
     depends_on:
       postgres:
         condition: service_healthy
@@ -24,8 +23,8 @@ services:
     container_name: absalom-command-center-web
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+    env_file:
+      - .env
     depends_on:
       - api
 
@@ -33,15 +32,15 @@ services:
     image: postgres:16
     container_name: absalom-command-center-postgres
     environment:
-      POSTGRES_USER: absalom
-      POSTGRES_PASSWORD: absalom
-      POSTGRES_DB: absalom_command_center
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
       - absalom_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U absalom -d absalom_command_center"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -58,11 +57,10 @@ services:
       dockerfile: Dockerfile
     container_name: absalom-command-center-worker
     command: celery -A services.worker.celery_app worker --loglevel=info
+    env_file:
+      - .env
     environment:
       - PYTHONPATH=/app
-      - ENVIRONMENT=development
-      - DATABASE_URL=postgresql+asyncpg://absalom:absalom@postgres:5432/absalom_command_center
-      - REDIS_URL=redis://redis:6379/0
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,11 +73,10 @@ services:
       dockerfile: Dockerfile
     container_name: absalom-command-center-beat
     command: celery -A services.worker.celery_app beat --loglevel=info
+    env_file:
+      - .env
     environment:
       - PYTHONPATH=/app
-      - ENVIRONMENT=development
-      - DATABASE_URL=postgresql+asyncpg://absalom:absalom@postgres:5432/absalom_command_center
-      - REDIS_URL=redis://redis:6379/0
     depends_on:
       redis:
         condition: service_started
