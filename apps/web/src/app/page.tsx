@@ -7,6 +7,8 @@ import {
   CheckCircle,
   ClipboardList,
   LogOut,
+  Play,
+  Plus,
   RefreshCw,
   Workflow,
   XCircle,
@@ -60,6 +62,11 @@ export default function Home() {
   const [logs, setLogs] = useState<ExecutionLogItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [workflowName, setWorkflowName] = useState("");
+  const [taskName, setTaskName] = useState("");
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
+
   async function loadDashboard() {
     const [userResponse, metricsResponse, workflowsResponse, tasksResponse, logsResponse] =
       await Promise.all([
@@ -76,6 +83,37 @@ export default function Home() {
     setTasks(tasksResponse.data);
     setLogs(logsResponse.data);
     setLoading(false);
+  }
+
+  async function createWorkflow() {
+    if (!workflowName.trim()) return;
+
+    await api.post("/workflows", {
+      name: workflowName,
+    });
+
+    setWorkflowName("");
+    setActionMessage("Workflow created.");
+    await loadDashboard();
+  }
+
+  async function createTask() {
+    if (!taskName.trim() || !selectedWorkflowId) return;
+
+    await api.post("/tasks", {
+      workflow_id: Number(selectedWorkflowId),
+      name: taskName,
+    });
+
+    setTaskName("");
+    setActionMessage("Task created.");
+    await loadDashboard();
+  }
+
+  async function dispatchTask(taskId: number) {
+    await api.post(`/tasks/${taskId}/dispatch`);
+    setActionMessage(`Task #${taskId} dispatched.`);
+    await loadDashboard();
   }
 
   function logout() {
@@ -158,6 +196,62 @@ export default function Home() {
               <MetricCard title="Active" value={metrics.active_tasks} icon={<Activity size={28} />} />
             </section>
 
+            <Panel title="Operator Controls">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-zinc-300">Create Workflow</h3>
+                  <input
+                    className="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3"
+                    value={workflowName}
+                    onChange={(event) => setWorkflowName(event.target.value)}
+                    placeholder="Workflow name"
+                  />
+                  <button
+                    onClick={createWorkflow}
+                    className="flex items-center justify-center gap-2 bg-white text-black px-4 py-3 rounded-xl font-semibold w-full"
+                  >
+                    <Plus size={18} />
+                    Create Workflow
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-zinc-300">Create Task</h3>
+                  <select
+                    className="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3"
+                    value={selectedWorkflowId}
+                    onChange={(event) => setSelectedWorkflowId(event.target.value)}
+                  >
+                    <option value="">Select workflow</option>
+                    {workflows.map((workflow) => (
+                      <option key={workflow.id} value={workflow.id}>
+                        #{workflow.id} — {workflow.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    className="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3"
+                    value={taskName}
+                    onChange={(event) => setTaskName(event.target.value)}
+                    placeholder="Task name"
+                  />
+
+                  <button
+                    onClick={createTask}
+                    className="flex items-center justify-center gap-2 bg-white text-black px-4 py-3 rounded-xl font-semibold w-full"
+                  >
+                    <Plus size={18} />
+                    Create Task
+                  </button>
+                </div>
+              </div>
+
+              {actionMessage && (
+                <p className="text-green-400 text-sm mt-5">{actionMessage}</p>
+              )}
+            </Panel>
+
             <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <Panel title="Workflows">
                 <DataTable
@@ -172,12 +266,20 @@ export default function Home() {
 
               <Panel title="Tasks">
                 <DataTable
-                  headers={["ID", "Workflow", "Name", "State"]}
+                  headers={["ID", "Workflow", "Name", "State", "Action"]}
                   rows={tasks.map((task) => [
                     task.id,
                     task.workflow_id,
                     task.name,
                     <StatusBadge key={task.id} state={task.state} />,
+                    <button
+                      key={`dispatch-${task.id}`}
+                      onClick={() => dispatchTask(task.id)}
+                      className="inline-flex items-center gap-2 bg-zinc-800 text-white px-3 py-2 rounded-lg font-semibold"
+                    >
+                      <Play size={14} />
+                      Dispatch
+                    </button>,
                   ])}
                 />
               </Panel>
