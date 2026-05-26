@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.database.session import get_database_session
-from services.task.schemas.task import TaskCreate, TaskRead
+from services.task.schemas.task import TaskCreate, TaskRead, TaskUpdateState
 from services.task.services.task_service import TaskService
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -25,3 +25,17 @@ async def list_tasks(
     service = TaskService(session)
 
     return await service.list_tasks()
+
+
+@router.patch("/{task_id}/state", response_model=TaskRead)
+async def update_task_state(
+    task_id: int,
+    payload: TaskUpdateState,
+    session: AsyncSession = Depends(get_database_session),
+):
+    service = TaskService(session)
+
+    return await service.update_task_state(
+        task_id=task_id,
+        state=payload.state,
+    )

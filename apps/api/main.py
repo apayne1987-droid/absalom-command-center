@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 from fastapi import FastAPI
 
+from apps.api.routes.execution_log_routes import router as execution_log_router
 from apps.api.routes.task_routes import router as task_router
 from apps.api.routes.workflow_routes import router as workflow_router
 from kernel.runtime.state import CURRENT_RUNTIME_STATE
@@ -17,6 +18,7 @@ app = FastAPI(
 
 app.include_router(workflow_router)
 app.include_router(task_router)
+app.include_router(execution_log_router)
 
 
 @app.get("/health")

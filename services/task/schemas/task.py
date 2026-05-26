@@ -6,6 +6,10 @@ class TaskCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
 
 
+class TaskUpdateState(BaseModel):
+    state: str = Field(min_length=1, max_length=50)
+
+
 class TaskRead(BaseModel):
     id: int
     workflow_id: int
