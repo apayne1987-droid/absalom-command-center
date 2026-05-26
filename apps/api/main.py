@@ -2,6 +2,8 @@ from datetime import UTC, datetime
 
 from fastapi import FastAPI
 
+from apps.api.routes.task_routes import router as task_router
+from apps.api.routes.workflow_routes import router as workflow_router
 from kernel.runtime.state import CURRENT_RUNTIME_STATE
 from services.config.settings import settings
 from services.database.session import check_database_connection
@@ -12,6 +14,9 @@ app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
 )
+
+app.include_router(workflow_router)
+app.include_router(task_router)
 
 
 @app.get("/health")

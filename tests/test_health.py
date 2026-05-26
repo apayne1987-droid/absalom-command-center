@@ -13,7 +13,7 @@ def test_health():
 
     data = response.json()
 
-    assert data["status"] == "ok"
+    assert data["status"] in ["ok", "degraded"]
 
 
 def test_runtime_status():

@@ -1,0 +1,27 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from services.database.session import get_database_session
+from services.task.schemas.task import TaskCreate, TaskRead
+from services.task.services.task_service import TaskService
+
+router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+
+@router.post("", response_model=TaskRead)
+async def create_task(
+    payload: TaskCreate,
+    session: AsyncSession = Depends(get_database_session),
+):
+    service = TaskService(session)
+
+    return await service.create_task(payload)
+
+
+@router.get("", response_model=list[TaskRead])
+async def list_tasks(
+    session: AsyncSession = Depends(get_database_session),
+):
+    service = TaskService(session)
+
+    return await service.list_tasks()
