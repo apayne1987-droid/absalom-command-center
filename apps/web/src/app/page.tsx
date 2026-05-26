@@ -42,35 +42,46 @@ type CurrentUser = {
   email: string;
 };
 
+type Workspace =
+  | "Executive Core"
+  | "Execution OS"
+  | "AI Systems"
+  | "Revenue Engine"
+  | "Dev Forge"
+  | "Infrastructure";
+
 const navigation = [
   {
-    title: "Executive Core",
+    title: "Executive Core" as Workspace,
     icon: Brain,
   },
   {
-    title: "Execution OS",
+    title: "Execution OS" as Workspace,
     icon: ClipboardList,
   },
   {
-    title: "AI Systems",
+    title: "AI Systems" as Workspace,
     icon: Cpu,
   },
   {
-    title: "Revenue Engine",
+    title: "Revenue Engine" as Workspace,
     icon: DollarSign,
   },
   {
-    title: "Dev Forge",
+    title: "Dev Forge" as Workspace,
     icon: Layers3,
   },
   {
-    title: "Infrastructure",
+    title: "Infrastructure" as Workspace,
     icon: Shield,
   },
 ];
 
 export default function Home() {
   const router = useRouter();
+
+  const [activeWorkspace, setActiveWorkspace] =
+    useState<Workspace>("Executive Core");
 
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [metrics, setMetrics] = useState<RuntimeMetrics | null>(null);
@@ -145,19 +156,37 @@ export default function Home() {
           {navigation.map((item) => {
             const Icon = item.icon;
 
+            const active = activeWorkspace === item.title;
+
             return (
               <button
                 key={item.title}
-                className="w-full flex items-center justify-between rounded-2xl px-4 py-3 hover:bg-zinc-900 transition border border-transparent hover:border-zinc-800"
+                onClick={() => setActiveWorkspace(item.title)}
+                className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 transition border ${
+                  active
+                    ? "bg-white text-black border-white"
+                    : "hover:bg-zinc-900 border-transparent hover:border-zinc-800"
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon size={18} className="text-zinc-400" />
-                  <span className="text-sm font-medium text-zinc-200">
+                  <Icon
+                    size={18}
+                    className={active ? "text-black" : "text-zinc-400"}
+                  />
+
+                  <span
+                    className={`text-sm font-medium ${
+                      active ? "text-black" : "text-zinc-200"
+                    }`}
+                  >
                     {item.title}
                   </span>
                 </div>
 
-                <ChevronRight size={16} className="text-zinc-600" />
+                <ChevronRight
+                  size={16}
+                  className={active ? "text-black" : "text-zinc-600"}
+                />
               </button>
             );
           })}
@@ -181,17 +210,15 @@ export default function Home() {
         <header className="flex items-start justify-between mb-10">
           <div>
             <div className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
-              Executive Core
+              {activeWorkspace}
             </div>
 
             <h2 className="text-5xl font-semibold tracking-tight leading-none">
-              Operational Intelligence
+              {workspaceTitle(activeWorkspace)}
             </h2>
 
             <p className="text-zinc-500 mt-5 max-w-2xl text-lg leading-relaxed">
-              Focused leverage infrastructure designed to compress cognition,
-              improve prioritization, increase execution velocity, and reduce
-              operational chaos.
+              {workspaceDescription(activeWorkspace)}
             </p>
           </div>
 
@@ -204,133 +231,173 @@ export default function Home() {
           </button>
         </header>
 
-        <section className="grid grid-cols-2 xl:grid-cols-6 gap-5 mb-10">
-          <MetricCard
-            title="Workflows"
-            value={metrics.workflows}
-            icon={<Workflow size={20} />}
-          />
+        {activeWorkspace === "Executive Core" && (
+          <>
+            <section className="grid grid-cols-2 xl:grid-cols-6 gap-5 mb-10">
+              <MetricCard
+                title="Workflows"
+                value={metrics.workflows}
+                icon={<Workflow size={20} />}
+              />
 
-          <MetricCard
-            title="Tasks"
-            value={metrics.tasks}
-            icon={<ClipboardList size={20} />}
-          />
+              <MetricCard
+                title="Tasks"
+                value={metrics.tasks}
+                icon={<ClipboardList size={20} />}
+              />
 
-          <MetricCard
-            title="Execution Logs"
-            value={metrics.execution_logs}
-            icon={<Activity size={20} />}
-          />
+              <MetricCard
+                title="Execution Logs"
+                value={metrics.execution_logs}
+                icon={<Activity size={20} />}
+              />
 
-          <MetricCard
-            title="Completed"
-            value={metrics.completed_tasks}
-            icon={<CheckCircle size={20} />}
-          />
+              <MetricCard
+                title="Completed"
+                value={metrics.completed_tasks}
+                icon={<CheckCircle size={20} />}
+              />
 
-          <MetricCard
-            title="Failed"
-            value={metrics.failed_tasks}
-            icon={<XCircle size={20} />}
-          />
+              <MetricCard
+                title="Failed"
+                value={metrics.failed_tasks}
+                icon={<XCircle size={20} />}
+              />
 
-          <MetricCard
-            title="Active"
-            value={metrics.active_tasks}
-            icon={<Cpu size={20} />}
-          />
-        </section>
+              <MetricCard
+                title="Active"
+                value={metrics.active_tasks}
+                icon={<Cpu size={20} />}
+              />
+            </section>
 
-        <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-8">
-          <div className="bg-[#111113] border border-zinc-900 rounded-[28px] p-8">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <div className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-3">
-                  Priority Engine
-                </div>
-
-                <h3 className="text-3xl font-semibold">
-                  Top Strategic Priorities
-                </h3>
-              </div>
-
-              <div className="text-sm text-zinc-500">
-                Leverage-ranked operational targets
-              </div>
-            </div>
-
-            <div className="space-y-5">
-              {priorities.map((priority) => (
-                <div
-                  key={priority.id}
-                  className="rounded-3xl border border-zinc-900 bg-black/40 p-6 hover:border-zinc-700 transition"
-                >
-                  <div className="flex items-start justify-between mb-5">
-                    <div>
-                      <div className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-3">
-                        Priority #{priority.id}
-                      </div>
-
-                      <h4 className="text-2xl font-semibold leading-tight max-w-3xl">
-                        {priority.title}
-                      </h4>
+            <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-8">
+              <div className="bg-[#111113] border border-zinc-900 rounded-[28px] p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-3">
+                      Priority Engine
                     </div>
 
-                    <div className="bg-white text-black px-4 py-2 rounded-2xl font-bold text-lg">
-                      {priority.priority_score}
-                    </div>
+                    <h3 className="text-3xl font-semibold">
+                      Top Strategic Priorities
+                    </h3>
                   </div>
 
-                  <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-6 items-end">
-                    <div>
-                      <div className="text-sm text-zinc-500 mb-2">
-                        Current Bottleneck
-                      </div>
-
-                      <p className="text-zinc-300 leading-relaxed">
-                        {priority.bottleneck ?? "No bottleneck recorded."}
-                      </p>
-                    </div>
-
-                    <div className="text-xs uppercase tracking-[0.2em] text-emerald-400">
-                      {priority.status}
-                    </div>
+                  <div className="text-sm text-zinc-500">
+                    Leverage-ranked operational targets
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="space-y-8">
-            <SystemPanel
-              title="Runtime Status"
-              value="Operational"
-              subtitle="Core systems online and authenticated."
-            />
+                <div className="space-y-5">
+                  {priorities.map((priority) => (
+                    <div
+                      key={priority.id}
+                      className="rounded-3xl border border-zinc-900 bg-black/40 p-6 hover:border-zinc-700 transition"
+                    >
+                      <div className="flex items-start justify-between mb-5">
+                        <div>
+                          <div className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-3">
+                            Priority #{priority.id}
+                          </div>
 
-            <SystemPanel
-              title="Execution Velocity"
-              value={`${metrics.completed_tasks}`}
-              subtitle="Completed operational tasks."
-            />
+                          <h4 className="text-2xl font-semibold leading-tight max-w-3xl">
+                            {priority.title}
+                          </h4>
+                        </div>
 
-            <SystemPanel
-              title="Failure Load"
-              value={`${metrics.failed_tasks}`}
-              subtitle="Runtime execution failures detected."
-            />
+                        <div className="bg-white text-black px-4 py-2 rounded-2xl font-bold text-lg">
+                          {priority.priority_score}
+                        </div>
+                      </div>
 
-            <SystemPanel
-              title="Operational Principle"
-              value="Compression > Expansion"
-              subtitle="Focused leverage beats conceptual complexity."
-            />
-          </div>
-        </section>
+                      <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-6 items-end">
+                        <div>
+                          <div className="text-sm text-zinc-500 mb-2">
+                            Current Bottleneck
+                          </div>
+
+                          <p className="text-zinc-300 leading-relaxed">
+                            {priority.bottleneck ?? "No bottleneck recorded."}
+                          </p>
+                        </div>
+
+                        <div className="text-xs uppercase tracking-[0.2em] text-emerald-400">
+                          {priority.status}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                <SystemPanel
+                  title="Runtime Status"
+                  value="Operational"
+                  subtitle="Core systems online and authenticated."
+                />
+
+                <SystemPanel
+                  title="Execution Velocity"
+                  value={`${metrics.completed_tasks}`}
+                  subtitle="Completed operational tasks."
+                />
+
+                <SystemPanel
+                  title="Failure Load"
+                  value={`${metrics.failed_tasks}`}
+                  subtitle="Runtime execution failures detected."
+                />
+
+                <SystemPanel
+                  title="Operational Principle"
+                  value="Compression > Expansion"
+                  subtitle="Focused leverage beats conceptual complexity."
+                />
+              </div>
+            </section>
+          </>
+        )}
+
+        {activeWorkspace !== "Executive Core" && (
+          <WorkspacePlaceholder workspace={activeWorkspace} />
+        )}
       </section>
     </main>
   );
+}
+
+function workspaceTitle(workspace: Workspace) {
+  const map: Record<Workspace, string> = {
+    "Executive Core": "Operational Intelligence",
+    "Execution OS": "Execution Infrastructure",
+    "AI Systems": "AI-Native Leverage Systems",
+    "Revenue Engine": "Revenue Intelligence",
+    "Dev Forge": "Engineering Systems",
+    "Infrastructure": "Runtime Resilience",
+  };
+
+  return map[workspace];
+}
+
+function workspaceDescription(workspace: Workspace) {
+  const map: Record<Workspace, string> = {
+    "Executive Core":
+      "Focused leverage infrastructure designed to compress cognition and improve prioritization.",
+    "Execution OS":
+      "Operational execution systems focused on workflows, outputs, and execution velocity.",
+    "AI Systems":
+      "AI-native operational systems built to automate workflows and reduce cognitive load.",
+    "Revenue Engine":
+      "Recurring revenue infrastructure, monetization systems, and conversion analytics.",
+    "Dev Forge":
+      "Engineering systems, observability, scalability, and infrastructure tooling.",
+    "Infrastructure":
+      "Reliability engineering, runtime resilience, operational continuity, and security.",
+  };
+
+  return map[workspace];
 }
 
 function MetricCard({
@@ -347,9 +414,7 @@ function MetricCard({
       <div className="flex items-center justify-between mb-5">
         <div className="text-zinc-500 text-sm">{title}</div>
 
-        <div className="text-zinc-600">
-          {icon}
-        </div>
+        <div className="text-zinc-600">{icon}</div>
       </div>
 
       <div className="text-4xl font-semibold tracking-tight">
@@ -380,6 +445,29 @@ function SystemPanel({
 
       <p className="text-zinc-500 leading-relaxed">
         {subtitle}
+      </p>
+    </div>
+  );
+}
+
+function WorkspacePlaceholder({
+  workspace,
+}: {
+  workspace: Workspace;
+}) {
+  return (
+    <div className="bg-[#111113] border border-zinc-900 rounded-[28px] p-10">
+      <div className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-4">
+        {workspace}
+      </div>
+
+      <h3 className="text-4xl font-semibold mb-6">
+        Workspace Architecture Initialized
+      </h3>
+
+      <p className="text-zinc-500 text-lg leading-relaxed max-w-3xl">
+        This workspace is now connected to the executive navigation system and
+        ready for operational module expansion.
       </p>
     </div>
   );
