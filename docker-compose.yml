@@ -10,9 +10,12 @@ services:
       - PYTHONPATH=/app
       - ENVIRONMENT=development
       - DATABASE_URL=postgresql+asyncpg://absalom:absalom@postgres:5432/absalom_command_center
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
 
   postgres:
     image: postgres:16
@@ -30,6 +33,29 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  redis:
+    image: redis:7
+    container_name: absalom-command-center-redis
+    ports:
+      - "6379:6379"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: absalom-command-center-worker
+    command: celery -A services.worker.celery_app worker --loglevel=info
+    environment:
+      - PYTHONPATH=/app
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://absalom:absalom@postgres:5432/absalom_command_center
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
 volumes:
   absalom_postgres_data:
