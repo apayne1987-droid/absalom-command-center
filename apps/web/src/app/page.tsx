@@ -4,12 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Activity,
+  Brain,
   CheckCircle,
+  ChevronRight,
   ClipboardList,
+  Cpu,
+  DollarSign,
+  Layers3,
   LogOut,
-  Play,
-  Plus,
   RefreshCw,
+  Shield,
   Workflow,
   XCircle,
 } from "lucide-react";
@@ -25,95 +29,69 @@ type RuntimeMetrics = {
   active_tasks: number;
 };
 
-type WorkflowItem = {
+type ExecutivePriority = {
   id: number;
-  name: string;
-  state: string;
-};
-
-type TaskItem = {
-  id: number;
-  workflow_id: number;
-  name: string;
-  state: string;
-};
-
-type ExecutionLogItem = {
-  id: number;
-  task_id: number;
-  event_type: string;
-  message: string;
+  title: string;
+  bottleneck: string | null;
+  priority_score: number;
+  status: string;
 };
 
 type CurrentUser = {
   id: number;
   email: string;
-  is_active: boolean;
-  is_superuser: boolean;
 };
+
+const navigation = [
+  {
+    title: "Executive Core",
+    icon: Brain,
+  },
+  {
+    title: "Execution OS",
+    icon: ClipboardList,
+  },
+  {
+    title: "AI Systems",
+    icon: Cpu,
+  },
+  {
+    title: "Revenue Engine",
+    icon: DollarSign,
+  },
+  {
+    title: "Dev Forge",
+    icon: Layers3,
+  },
+  {
+    title: "Infrastructure",
+    icon: Shield,
+  },
+];
 
 export default function Home() {
   const router = useRouter();
 
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [metrics, setMetrics] = useState<RuntimeMetrics | null>(null);
-  const [workflows, setWorkflows] = useState<WorkflowItem[]>([]);
-  const [tasks, setTasks] = useState<TaskItem[]>([]);
-  const [logs, setLogs] = useState<ExecutionLogItem[]>([]);
+  const [priorities, setPriorities] = useState<ExecutivePriority[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [workflowName, setWorkflowName] = useState("");
-  const [taskName, setTaskName] = useState("");
-  const [selectedWorkflowId, setSelectedWorkflowId] = useState("");
-  const [actionMessage, setActionMessage] = useState("");
-
   async function loadDashboard() {
-    const [userResponse, metricsResponse, workflowsResponse, tasksResponse, logsResponse] =
-      await Promise.all([
-        api.get("/protected/me"),
-        api.get("/metrics/runtime"),
-        api.get("/workflows"),
-        api.get("/tasks"),
-        api.get("/execution-logs"),
-      ]);
+    const [
+      userResponse,
+      metricsResponse,
+      prioritiesResponse,
+    ] = await Promise.all([
+      api.get("/protected/me"),
+      api.get("/metrics/runtime"),
+      api.get("/executive/priorities"),
+    ]);
 
     setUser(userResponse.data);
     setMetrics(metricsResponse.data);
-    setWorkflows(workflowsResponse.data);
-    setTasks(tasksResponse.data);
-    setLogs(logsResponse.data);
+    setPriorities(prioritiesResponse.data);
     setLoading(false);
-  }
-
-  async function createWorkflow() {
-    if (!workflowName.trim()) return;
-
-    await api.post("/workflows", {
-      name: workflowName,
-    });
-
-    setWorkflowName("");
-    setActionMessage("Workflow created.");
-    await loadDashboard();
-  }
-
-  async function createTask() {
-    if (!taskName.trim() || !selectedWorkflowId) return;
-
-    await api.post("/tasks", {
-      workflow_id: Number(selectedWorkflowId),
-      name: taskName,
-    });
-
-    setTaskName("");
-    setActionMessage("Task created.");
-    await loadDashboard();
-  }
-
-  async function dispatchTask(taskId: number) {
-    await api.post(`/tasks/${taskId}/dispatch`);
-    setActionMessage(`Task #${taskId} dispatched.`);
-    await loadDashboard();
   }
 
   function logout() {
@@ -133,246 +111,276 @@ export default function Home() {
       localStorage.removeItem("access_token");
       router.push("/login");
     });
-
-    const interval = setInterval(() => {
-      loadDashboard().catch(() => {
-        localStorage.removeItem("access_token");
-        router.push("/login");
-      });
-    }, 5000);
-
-    return () => clearInterval(interval);
   }, []);
 
+  if (loading || !metrics) {
+    return (
+      <main className="min-h-screen bg-[#09090B] text-white flex items-center justify-center">
+        <div className="text-zinc-500 text-lg">
+          Initializing Executive Runtime...
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <header className="flex items-center justify-between">
+    <main className="min-h-screen bg-[#09090B] text-white flex">
+      <aside className="w-[290px] border-r border-zinc-900 bg-black/40 backdrop-blur-xl p-6 flex flex-col">
+        <div>
+          <div className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-3">
+            ABSALOM OS
+          </div>
+
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Executive Command
+          </h1>
+
+          <p className="text-sm text-zinc-500 mt-3 leading-relaxed">
+            AI-native leverage infrastructure for operational execution,
+            prioritization, automation, and intelligence.
+          </p>
+        </div>
+
+        <nav className="mt-10 flex-1 space-y-2">
+          {navigation.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <button
+                key={item.title}
+                className="w-full flex items-center justify-between rounded-2xl px-4 py-3 hover:bg-zinc-900 transition border border-transparent hover:border-zinc-800"
+              >
+                <div className="flex items-center gap-3">
+                  <Icon size={18} className="text-zinc-400" />
+                  <span className="text-sm font-medium text-zinc-200">
+                    {item.title}
+                  </span>
+                </div>
+
+                <ChevronRight size={16} className="text-zinc-600" />
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="border-t border-zinc-900 pt-5">
+          <div className="text-sm text-zinc-400 mb-3">
+            {user?.email}
+          </div>
+
+          <button
+            onClick={logout}
+            className="w-full bg-zinc-900 hover:bg-zinc-800 transition rounded-2xl py-3 text-sm font-semibold"
+          >
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      <section className="flex-1 p-10 overflow-auto">
+        <header className="flex items-start justify-between mb-10">
           <div>
-            <h1 className="text-5xl font-bold tracking-tight">
-              ABSALOM COMMAND CENTER
-            </h1>
-            <p className="text-zinc-400 mt-2">
-              Authenticated runtime orchestration and operational telemetry.
+            <div className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
+              Executive Core
+            </div>
+
+            <h2 className="text-5xl font-semibold tracking-tight leading-none">
+              Operational Intelligence
+            </h2>
+
+            <p className="text-zinc-500 mt-5 max-w-2xl text-lg leading-relaxed">
+              Focused leverage infrastructure designed to compress cognition,
+              improve prioritization, increase execution velocity, and reduce
+              operational chaos.
             </p>
-            {user && (
-              <p className="text-zinc-500 mt-1 text-sm">
-                Logged in as {user.email}
-              </p>
-            )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={loadDashboard}
-              className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-xl font-semibold"
-            >
-              <RefreshCw size={18} />
-              Refresh
-            </button>
-
-            <button
-              onClick={logout}
-              className="flex items-center gap-2 bg-zinc-800 text-white px-4 py-2 rounded-xl font-semibold"
-            >
-              <LogOut size={18} />
-              Logout
-            </button>
-          </div>
+          <button
+            onClick={loadDashboard}
+            className="bg-white text-black px-5 py-3 rounded-2xl font-semibold flex items-center gap-2 shadow-2xl"
+          >
+            <RefreshCw size={18} />
+            Refresh Runtime
+          </button>
         </header>
 
-        {loading || !metrics ? (
-          <div className="text-xl text-zinc-400">
-            Loading authenticated runtime telemetry...
-          </div>
-        ) : (
-          <>
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <MetricCard title="Workflows" value={metrics.workflows} icon={<Workflow size={28} />} />
-              <MetricCard title="Tasks" value={metrics.tasks} icon={<ClipboardList size={28} />} />
-              <MetricCard title="Execution Logs" value={metrics.execution_logs} icon={<Activity size={28} />} />
-              <MetricCard title="Completed" value={metrics.completed_tasks} icon={<CheckCircle size={28} />} />
-              <MetricCard title="Failed" value={metrics.failed_tasks} icon={<XCircle size={28} />} />
-              <MetricCard title="Active" value={metrics.active_tasks} icon={<Activity size={28} />} />
-            </section>
+        <section className="grid grid-cols-2 xl:grid-cols-6 gap-5 mb-10">
+          <MetricCard
+            title="Workflows"
+            value={metrics.workflows}
+            icon={<Workflow size={20} />}
+          />
 
-            <Panel title="Operator Controls">
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-zinc-300">Create Workflow</h3>
-                  <input
-                    className="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3"
-                    value={workflowName}
-                    onChange={(event) => setWorkflowName(event.target.value)}
-                    placeholder="Workflow name"
-                  />
-                  <button
-                    onClick={createWorkflow}
-                    className="flex items-center justify-center gap-2 bg-white text-black px-4 py-3 rounded-xl font-semibold w-full"
-                  >
-                    <Plus size={18} />
-                    Create Workflow
-                  </button>
+          <MetricCard
+            title="Tasks"
+            value={metrics.tasks}
+            icon={<ClipboardList size={20} />}
+          />
+
+          <MetricCard
+            title="Execution Logs"
+            value={metrics.execution_logs}
+            icon={<Activity size={20} />}
+          />
+
+          <MetricCard
+            title="Completed"
+            value={metrics.completed_tasks}
+            icon={<CheckCircle size={20} />}
+          />
+
+          <MetricCard
+            title="Failed"
+            value={metrics.failed_tasks}
+            icon={<XCircle size={20} />}
+          />
+
+          <MetricCard
+            title="Active"
+            value={metrics.active_tasks}
+            icon={<Cpu size={20} />}
+          />
+        </section>
+
+        <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-8">
+          <div className="bg-[#111113] border border-zinc-900 rounded-[28px] p-8">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <div className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-3">
+                  Priority Engine
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-zinc-300">Create Task</h3>
-                  <select
-                    className="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3"
-                    value={selectedWorkflowId}
-                    onChange={(event) => setSelectedWorkflowId(event.target.value)}
-                  >
-                    <option value="">Select workflow</option>
-                    {workflows.map((workflow) => (
-                      <option key={workflow.id} value={workflow.id}>
-                        #{workflow.id} — {workflow.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <input
-                    className="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3"
-                    value={taskName}
-                    onChange={(event) => setTaskName(event.target.value)}
-                    placeholder="Task name"
-                  />
-
-                  <button
-                    onClick={createTask}
-                    className="flex items-center justify-center gap-2 bg-white text-black px-4 py-3 rounded-xl font-semibold w-full"
-                  >
-                    <Plus size={18} />
-                    Create Task
-                  </button>
-                </div>
+                <h3 className="text-3xl font-semibold">
+                  Top Strategic Priorities
+                </h3>
               </div>
 
-              {actionMessage && (
-                <p className="text-green-400 text-sm mt-5">{actionMessage}</p>
-              )}
-            </Panel>
+              <div className="text-sm text-zinc-500">
+                Leverage-ranked operational targets
+              </div>
+            </div>
 
-            <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <Panel title="Workflows">
-                <DataTable
-                  headers={["ID", "Name", "State"]}
-                  rows={workflows.map((workflow) => [
-                    workflow.id,
-                    workflow.name,
-                    <StatusBadge key={workflow.id} state={workflow.state} />,
-                  ])}
-                />
-              </Panel>
-
-              <Panel title="Tasks">
-                <DataTable
-                  headers={["ID", "Workflow", "Name", "State", "Action"]}
-                  rows={tasks.map((task) => [
-                    task.id,
-                    task.workflow_id,
-                    task.name,
-                    <StatusBadge key={task.id} state={task.state} />,
-                    <button
-                      key={`dispatch-${task.id}`}
-                      onClick={() => dispatchTask(task.id)}
-                      className="inline-flex items-center gap-2 bg-zinc-800 text-white px-3 py-2 rounded-lg font-semibold"
-                    >
-                      <Play size={14} />
-                      Dispatch
-                    </button>,
-                  ])}
-                />
-              </Panel>
-            </section>
-
-            <Panel title="Execution Log Feed">
-              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
-                {logs
-                  .slice()
-                  .reverse()
-                  .map((log) => (
-                    <div key={log.id} className="border border-zinc-800 bg-zinc-950 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-semibold text-sm text-zinc-300">{log.event_type}</div>
-                        <div className="text-xs text-zinc-500">Task #{log.task_id}</div>
+            <div className="space-y-5">
+              {priorities.map((priority) => (
+                <div
+                  key={priority.id}
+                  className="rounded-3xl border border-zinc-900 bg-black/40 p-6 hover:border-zinc-700 transition"
+                >
+                  <div className="flex items-start justify-between mb-5">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-3">
+                        Priority #{priority.id}
                       </div>
-                      <p className="text-zinc-400 text-sm">{log.message}</p>
+
+                      <h4 className="text-2xl font-semibold leading-tight max-w-3xl">
+                        {priority.title}
+                      </h4>
                     </div>
-                  ))}
-              </div>
-            </Panel>
-          </>
-        )}
-      </div>
+
+                    <div className="bg-white text-black px-4 py-2 rounded-2xl font-bold text-lg">
+                      {priority.priority_score}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-6 items-end">
+                    <div>
+                      <div className="text-sm text-zinc-500 mb-2">
+                        Current Bottleneck
+                      </div>
+
+                      <p className="text-zinc-300 leading-relaxed">
+                        {priority.bottleneck ?? "No bottleneck recorded."}
+                      </p>
+                    </div>
+
+                    <div className="text-xs uppercase tracking-[0.2em] text-emerald-400">
+                      {priority.status}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            <SystemPanel
+              title="Runtime Status"
+              value="Operational"
+              subtitle="Core systems online and authenticated."
+            />
+
+            <SystemPanel
+              title="Execution Velocity"
+              value={`${metrics.completed_tasks}`}
+              subtitle="Completed operational tasks."
+            />
+
+            <SystemPanel
+              title="Failure Load"
+              value={`${metrics.failed_tasks}`}
+              subtitle="Runtime execution failures detected."
+            />
+
+            <SystemPanel
+              title="Operational Principle"
+              value="Compression > Expansion"
+              subtitle="Focused leverage beats conceptual complexity."
+            />
+          </div>
+        </section>
+      </section>
     </main>
   );
 }
 
-function MetricCard({ title, value, icon }: { title: string; value: number; icon: React.ReactNode }) {
+function MetricCard({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+}) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-zinc-400">{title}</div>
-        <div className="text-zinc-500">{icon}</div>
+    <div className="bg-[#111113] border border-zinc-900 rounded-[24px] p-5">
+      <div className="flex items-center justify-between mb-5">
+        <div className="text-zinc-500 text-sm">{title}</div>
+
+        <div className="text-zinc-600">
+          {icon}
+        </div>
       </div>
-      <div className="text-5xl font-bold">{value}</div>
+
+      <div className="text-4xl font-semibold tracking-tight">
+        {value}
+      </div>
     </div>
   );
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+function SystemPanel({
+  title,
+  value,
+  subtitle,
+}: {
+  title: string;
+  value: string;
+  subtitle: string;
+}) {
   return (
-    <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-      <h2 className="text-2xl font-bold mb-5">{title}</h2>
-      {children}
-    </section>
-  );
-}
+    <div className="bg-[#111113] border border-zinc-900 rounded-[28px] p-7">
+      <div className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-3">
+        {title}
+      </div>
 
-function DataTable({ headers, rows }: { headers: string[]; rows: React.ReactNode[][] }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-zinc-800 text-zinc-500">
-            {headers.map((header) => (
-              <th key={header} className="text-left py-3 pr-4">
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
+      <div className="text-3xl font-semibold leading-tight mb-4">
+        {value}
+      </div>
 
-        <tbody>
-          {rows.map((row, index) => (
-            <tr key={index} className="border-b border-zinc-800">
-              {row.map((cell, cellIndex) => (
-                <td key={cellIndex} className="py-3 pr-4 text-zinc-300">
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <p className="text-zinc-500 leading-relaxed">
+        {subtitle}
+      </p>
     </div>
-  );
-}
-
-function StatusBadge({ state }: { state: string }) {
-  const styles: Record<string, string> = {
-    CREATED: "bg-zinc-800 text-zinc-300",
-    QUEUED: "bg-blue-950 text-blue-300",
-    ACTIVE: "bg-yellow-950 text-yellow-300",
-    COMPLETED: "bg-green-950 text-green-300",
-    FAILED: "bg-red-950 text-red-300",
-    PAUSED: "bg-purple-950 text-purple-300",
-    ARCHIVED: "bg-zinc-800 text-zinc-500",
-  };
-
-  return (
-    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${styles[state] ?? "bg-zinc-800 text-zinc-300"}`}>
-      {state}
-    </span>
   );
 }
