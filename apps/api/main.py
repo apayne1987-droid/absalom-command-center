@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from apps.api.routes.execution_log_routes import router as execution_log_router
 from apps.api.routes.metrics_routes import router as metrics_router
@@ -15,6 +16,17 @@ from services.telemetry.logger import log_event
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(workflow_router)
