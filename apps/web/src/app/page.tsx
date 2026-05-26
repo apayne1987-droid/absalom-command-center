@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Activity,
   CheckCircle,
   ClipboardList,
+  LogOut,
   RefreshCw,
   Workflow,
   XCircle,
@@ -41,7 +43,17 @@ type ExecutionLogItem = {
   message: string;
 };
 
+type CurrentUser = {
+  id: number;
+  email: string;
+  is_active: boolean;
+  is_superuser: boolean;
+};
+
 export default function Home() {
+  const router = useRouter();
+
+  const [user, setUser] = useState<CurrentUser | null>(null);
   const [metrics, setMetrics] = useState<RuntimeMetrics | null>(null);
   const [workflows, setWorkflows] = useState<WorkflowItem[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
@@ -49,14 +61,16 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   async function loadDashboard() {
-    const [metricsResponse, workflowsResponse, tasksResponse, logsResponse] =
+    const [userResponse, metricsResponse, workflowsResponse, tasksResponse, logsResponse] =
       await Promise.all([
+        api.get("/protected/me"),
         api.get("/metrics/runtime"),
         api.get("/workflows"),
         api.get("/tasks"),
         api.get("/execution-logs"),
       ]);
 
+    setUser(userResponse.data);
     setMetrics(metricsResponse.data);
     setWorkflows(workflowsResponse.data);
     setTasks(tasksResponse.data);
@@ -64,10 +78,30 @@ export default function Home() {
     setLoading(false);
   }
 
-  useEffect(() => {
-    loadDashboard();
+  function logout() {
+    localStorage.removeItem("access_token");
+    router.push("/login");
+  }
 
-    const interval = setInterval(loadDashboard, 5000);
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    loadDashboard().catch(() => {
+      localStorage.removeItem("access_token");
+      router.push("/login");
+    });
+
+    const interval = setInterval(() => {
+      loadDashboard().catch(() => {
+        localStorage.removeItem("access_token");
+        router.push("/login");
+      });
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
@@ -81,61 +115,47 @@ export default function Home() {
               ABSALOM COMMAND CENTER
             </h1>
             <p className="text-zinc-400 mt-2">
-              Runtime orchestration, execution telemetry, and operational state.
+              Authenticated runtime orchestration and operational telemetry.
             </p>
+            {user && (
+              <p className="text-zinc-500 mt-1 text-sm">
+                Logged in as {user.email}
+              </p>
+            )}
           </div>
 
-          <button
-            onClick={loadDashboard}
-            className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-xl font-semibold"
-          >
-            <RefreshCw size={18} />
-            Refresh
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={loadDashboard}
+              className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-xl font-semibold"
+            >
+              <RefreshCw size={18} />
+              Refresh
+            </button>
+
+            <button
+              onClick={logout}
+              className="flex items-center gap-2 bg-zinc-800 text-white px-4 py-2 rounded-xl font-semibold"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+          </div>
         </header>
 
         {loading || !metrics ? (
           <div className="text-xl text-zinc-400">
-            Loading runtime telemetry...
+            Loading authenticated runtime telemetry...
           </div>
         ) : (
           <>
             <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <MetricCard
-                title="Workflows"
-                value={metrics.workflows}
-                icon={<Workflow size={28} />}
-              />
-
-              <MetricCard
-                title="Tasks"
-                value={metrics.tasks}
-                icon={<ClipboardList size={28} />}
-              />
-
-              <MetricCard
-                title="Execution Logs"
-                value={metrics.execution_logs}
-                icon={<Activity size={28} />}
-              />
-
-              <MetricCard
-                title="Completed"
-                value={metrics.completed_tasks}
-                icon={<CheckCircle size={28} />}
-              />
-
-              <MetricCard
-                title="Failed"
-                value={metrics.failed_tasks}
-                icon={<XCircle size={28} />}
-              />
-
-              <MetricCard
-                title="Active"
-                value={metrics.active_tasks}
-                icon={<Activity size={28} />}
-              />
+              <MetricCard title="Workflows" value={metrics.workflows} icon={<Workflow size={28} />} />
+              <MetricCard title="Tasks" value={metrics.tasks} icon={<ClipboardList size={28} />} />
+              <MetricCard title="Execution Logs" value={metrics.execution_logs} icon={<Activity size={28} />} />
+              <MetricCard title="Completed" value={metrics.completed_tasks} icon={<CheckCircle size={28} />} />
+              <MetricCard title="Failed" value={metrics.failed_tasks} icon={<XCircle size={28} />} />
+              <MetricCard title="Active" value={metrics.active_tasks} icon={<Activity size={28} />} />
             </section>
 
             <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -169,19 +189,11 @@ export default function Home() {
                   .slice()
                   .reverse()
                   .map((log) => (
-                    <div
-                      key={log.id}
-                      className="border border-zinc-800 bg-zinc-950 rounded-xl p-4"
-                    >
+                    <div key={log.id} className="border border-zinc-800 bg-zinc-950 rounded-xl p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <div className="font-semibold text-sm text-zinc-300">
-                          {log.event_type}
-                        </div>
-                        <div className="text-xs text-zinc-500">
-                          Task #{log.task_id}
-                        </div>
+                        <div className="font-semibold text-sm text-zinc-300">{log.event_type}</div>
+                        <div className="text-xs text-zinc-500">Task #{log.task_id}</div>
                       </div>
-
                       <p className="text-zinc-400 text-sm">{log.message}</p>
                     </div>
                   ))}
@@ -194,34 +206,19 @@ export default function Home() {
   );
 }
 
-function MetricCard({
-  title,
-  value,
-  icon,
-}: {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-}) {
+function MetricCard({ title, value, icon }: { title: string; value: number; icon: React.ReactNode }) {
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="text-zinc-400">{title}</div>
         <div className="text-zinc-500">{icon}</div>
       </div>
-
       <div className="text-5xl font-bold">{value}</div>
     </div>
   );
 }
 
-function Panel({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
       <h2 className="text-2xl font-bold mb-5">{title}</h2>
@@ -230,13 +227,7 @@ function Panel({
   );
 }
 
-function DataTable({
-  headers,
-  rows,
-}: {
-  headers: string[];
-  rows: React.ReactNode[][];
-}) {
+function DataTable({ headers, rows }: { headers: string[]; rows: React.ReactNode[][] }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -278,11 +269,7 @@ function StatusBadge({ state }: { state: string }) {
   };
 
   return (
-    <span
-      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-        styles[state] ?? "bg-zinc-800 text-zinc-300"
-      }`}
-    >
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${styles[state] ?? "bg-zinc-800 text-zinc-300"}`}>
       {state}
     </span>
   );
