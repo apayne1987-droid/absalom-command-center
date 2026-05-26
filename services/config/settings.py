@@ -1,15 +1,23 @@
-import os
-
-from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseModel):
-    app_name: str = "ABSALOM COMMAND CENTER"
-    app_version: str = "14.0.0"
-    environment: str = os.getenv("ENVIRONMENT", "development")
-    database_url: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql+asyncpg://absalom:absalom@localhost:5432/absalom_command_center",
+class Settings(BaseSettings):
+    ENVIRONMENT: str = "development"
+
+    DATABASE_URL: str
+    REDIS_URL: str
+
+    OPENAI_API_KEY: str = ""
+    ANTHROPIC_API_KEY: str = ""
+
+    DEFAULT_MODEL: str = "gpt-4.1-mini"
+
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore",
     )
 
 
