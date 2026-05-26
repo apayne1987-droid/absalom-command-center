@@ -4,6 +4,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
+    APP_NAME: str = "ABSALOM OS"
+    APP_VERSION: str = "0.1.0"
+
     DATABASE_URL: str
     REDIS_URL: str
 
@@ -20,5 +23,21 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    @property
+    def database_url(self) -> str:
+        return self.DATABASE_URL
 
-settings = Settings()
+    @property
+    def redis_url(self) -> str:
+        return self.REDIS_URL
+
+    @property
+    def app_name(self) -> str:
+        return self.APP_NAME
+
+    @property
+    def app_version(self) -> str:
+        return self.APP_VERSION
+
+
+settings = Settings.model_validate({})
