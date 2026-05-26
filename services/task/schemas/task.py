@@ -19,3 +19,9 @@ class TaskRead(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+class TaskDispatchRead(BaseModel):
+    task_id: int
+    dispatch_id: str
+    status: str
