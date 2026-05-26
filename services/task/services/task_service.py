@@ -5,6 +5,7 @@ from services.database.models.task import Task
 from services.execution.services.execution_log_service import ExecutionLogService
 from services.task.repositories.task_repository import TaskRepository
 from services.task.schemas.task import TaskCreate
+from services.workflow.services.workflow_service import WorkflowService
 
 
 VALID_TASK_STATES = {
@@ -22,6 +23,7 @@ class TaskService:
     def __init__(self, session: AsyncSession):
         self.repository = TaskRepository(session)
         self.execution_log_service = ExecutionLogService(session)
+        self.workflow_service = WorkflowService(session)
 
     async def create_task(self, payload: TaskCreate) -> Task:
         task = await self.repository.create(
@@ -34,6 +36,8 @@ class TaskService:
             event_type="task.created",
             message=f"Task created: {task.name}",
         )
+
+        await self.workflow_service.recalculate_workflow_state(task.workflow_id)
 
         return task
 
@@ -63,6 +67,10 @@ class TaskService:
             task_id=updated_task.id,
             event_type="task.state_updated",
             message=f"Task state changed to {normalized_state}",
+        )
+
+        await self.workflow_service.recalculate_workflow_state(
+            updated_task.workflow_id
         )
 
         return updated_task
