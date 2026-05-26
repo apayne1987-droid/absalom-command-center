@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+import hashlib
 
 import jwt
 from passlib.context import CryptContext
@@ -15,24 +16,45 @@ password_context = CryptContext(
 )
 
 
+def normalize_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+
 def hash_password(password: str) -> str:
-    return password_context.hash(password)
+    normalized_password = normalize_password(password)
+
+    return password_context.hash(normalized_password)
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
-    return password_context.verify(password, hashed_password)
+    normalized_password = normalize_password(password)
+
+    return password_context.verify(
+        normalized_password,
+        hashed_password,
+    )
 
 
 def create_access_token(subject: str) -> str:
-    expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(UTC) + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
 
     payload = {
         "sub": subject,
         "exp": expire,
     }
 
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(
+        payload,
+        SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
 
 
 def decode_access_token(token: str) -> dict:
-    return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    return jwt.decode(
+        token,
+        SECRET_KEY,
+        algorithms=[ALGORITHM],
+    )
