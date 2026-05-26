@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.database.session import get_database_session
 from services.task.schemas.task import TaskCreate, TaskRead, TaskUpdateState
+from services.task.services.task_dispatch_service import TaskDispatchService
 from services.task.services.task_service import TaskService
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -39,3 +40,15 @@ async def update_task_state(
         task_id=task_id,
         state=payload.state,
     )
+
+
+@router.post("/{task_id}/dispatch")
+async def dispatch_task(task_id: int):
+    dispatch_service = TaskDispatchService()
+    result = dispatch_service.dispatch_task(task_id)
+
+    return {
+        "task_id": task_id,
+        "dispatch_id": result.id,
+        "status": "dispatched",
+    }
