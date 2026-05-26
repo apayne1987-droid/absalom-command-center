@@ -9,3 +9,27 @@ services:
     environment:
       - PYTHONPATH=/app
       - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://absalom:absalom@postgres:5432/absalom_command_center
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16
+    container_name: absalom-command-center-postgres
+    environment:
+      POSTGRES_USER: absalom
+      POSTGRES_PASSWORD: absalom
+      POSTGRES_DB: absalom_command_center
+    ports:
+      - "5432:5432"
+    volumes:
+      - absalom_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U absalom -d absalom_command_center"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  absalom_postgres_data:

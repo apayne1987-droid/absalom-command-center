@@ -1,9 +1,10 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 from fastapi import FastAPI
 
 from kernel.runtime.state import CURRENT_RUNTIME_STATE
 from services.config.settings import settings
+from services.database.session import check_database_connection
 from services.telemetry.logger import log_event
 
 
@@ -15,11 +16,18 @@ app = FastAPI(
 
 @app.get("/health")
 async def health():
-    log_event("health.checked", runtime_state=CURRENT_RUNTIME_STATE)
+    database_connected = await check_database_connection()
+
+    log_event(
+        "health.checked",
+        runtime_state=CURRENT_RUNTIME_STATE,
+        database_connected=database_connected,
+    )
 
     return {
-        "status": "ok",
+        "status": "ok" if database_connected else "degraded",
         "runtime": CURRENT_RUNTIME_STATE,
+        "database": "connected" if database_connected else "disconnected",
         "timestamp": datetime.now(UTC).isoformat(),
     }
 
