@@ -1,20 +1,35 @@
-from pydantic import BaseModel
+from enum import Enum
+
+from pydantic import BaseModel, Field
+
+
+class KillQueueStatus(str, Enum):
+    REVIEW = "REVIEW"
+    KEEP = "KEEP"
+    KILL = "KILL"
+    AUTOMATE = "AUTOMATE"
 
 
 class KillQueueCreateRequest(BaseModel):
-    title: str
-    reason: str | None = None
-    drag_score: int = 5
-    complexity_score: int = 5
-    leverage_loss_score: int = 5
+    title: str = Field(..., min_length=3, max_length=200)
 
+    reason: str | None = Field(
+        default=None,
+        max_length=2000,
+    )
 
-class KillQueueResponse(BaseModel):
-    id: int
-    title: str
-    reason: str | None
-    drag_score: int
-    complexity_score: int
-    leverage_loss_score: int
-    status: str
-    kill_score: int
+    drag_score: int = Field(default=5, ge=1, le=10)
+
+    complexity_score: int = Field(
+        default=5,
+        ge=1,
+        le=10,
+    )
+
+    leverage_loss_score: int = Field(
+        default=5,
+        ge=1,
+        le=10,
+    )
+
+    status: KillQueueStatus = KillQueueStatus.REVIEW

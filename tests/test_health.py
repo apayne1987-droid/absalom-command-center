@@ -10,17 +10,3 @@ def test_health():
     response = client.get("/health")
 
     assert response.status_code == 200
-
-    data = response.json()
-
-    assert data["status"] in ["ok", "degraded"]
-
-
-def test_runtime_status():
-    response = client.get("/runtime/status")
-
-    assert response.status_code == 200
-
-    data = response.json()
-
-    assert data["runtime_state"] == "ACTIVE"

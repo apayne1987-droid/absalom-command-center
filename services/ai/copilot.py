@@ -1,24 +1,40 @@
+import json
+
+from pydantic import ValidationError
+
 from services.ai.client import get_openai_client
+from services.ai.schemas import ExecutiveBriefingStructuredResponse
 from services.config.settings import settings
 
 
 async def generate_executive_briefing(
     priorities: list[str],
-    metrics: dict[str, int | None],
-) -> str:
+    metrics: dict,
+    kill_queue: list[str] | None = None,
+    weekly_reviews: list[str] | None = None,
+) -> ExecutiveBriefingStructuredResponse:
     client = get_openai_client()
 
     if client is None:
-        return (
-            "AI Executive Copilot is installed and routed correctly, but "
-            "OPENAI_API_KEY is missing. Add it to .env and rebuild Docker "
-            "to enable live AI briefings."
+        return ExecutiveBriefingStructuredResponse(
+            summary="OPENAI_API_KEY missing.",
+            bottleneck="AI runtime unavailable.",
+            highest_leverage_focus="Configure OpenAI credentials.",
+            kill_recommendation="Do not expand scope yet.",
+            execution_recommendation="Add API key and rebuild containers.",
         )
 
     prompt = f"""
-You are the AI Executive Copilot for ABSALOM OS.
+Return ONLY valid JSON.
 
-Analyze the current operational state.
+Schema:
+{{
+  "summary": "string",
+  "bottleneck": "string",
+  "highest_leverage_focus": "string",
+  "kill_recommendation": "string",
+  "execution_recommendation": "string"
+}}
 
 PRIORITIES:
 {priorities}
@@ -26,18 +42,16 @@ PRIORITIES:
 METRICS:
 {metrics}
 
-Return a concise executive briefing with:
-1. Operational Summary
-2. Main Bottleneck
-3. Highest Leverage Focus
-4. Kill / Elimination Recommendation
-5. Execution Recommendation
+KILL_QUEUE:
+{kill_queue or []}
 
-Do not be motivational. Be strategic, direct, and useful.
+WEEKLY_REVIEWS:
+{weekly_reviews or []}
 """
 
     response = await client.chat.completions.create(
         model=settings.ai_default_model,
+        response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
@@ -48,7 +62,20 @@ Do not be motivational. Be strategic, direct, and useful.
                 "content": prompt,
             },
         ],
-        temperature=0.4,
+        temperature=0.2,
     )
 
-    return response.choices[0].message.content or "No response generated."
+    content = response.choices[0].message.content or "{}"
+
+    try:
+        parsed = json.loads(content)
+        return ExecutiveBriefingStructuredResponse(**parsed)
+
+    except (json.JSONDecodeError, ValidationError):
+        return ExecutiveBriefingStructuredResponse(
+            summary="AI response formatting failure.",
+            bottleneck="Invalid structured response.",
+            highest_leverage_focus="Stabilize AI output parsing.",
+            kill_recommendation="Avoid orchestration complexity.",
+            execution_recommendation="Inspect AI output manually.",
+        )

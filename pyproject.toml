@@ -1,0 +1,34 @@
+[project]
+name = "absalom-os"
+version = "0.1.0"
+description = "AI-native operational intelligence platform"
+requires-python = ">=3.12"
+
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "asyncpg",
+    "alembic",
+    "redis",
+    "celery",
+    "openai",
+    "litellm",
+    "pydantic",
+    "pydantic-settings",
+    "python-jose",
+    "passlib[bcrypt]",
+    "slowapi",
+    "httpx",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+ignore_missing_imports = true
