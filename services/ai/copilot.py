@@ -1,34 +1,32 @@
-from services.ai.provider import generate_ai_response
+from services.schemas.copilot import ExecutiveBriefing
 
 
-async def generate_executive_briefing(
-    priorities: list[str],
-    metrics: dict,
-) -> str:
-    prompt = f"""
-Analyze this operational state.
+async def generate_executive_briefing() -> ExecutiveBriefing:
+    return ExecutiveBriefing(
+        summary=(
+            "Current operational momentum is strong. "
+            "Infrastructure stability has significantly improved. "
+            "The highest priority is now product differentiation and "
+            "execution compression."
+        ),
 
-PRIORITIES:
-{priorities}
+        main_bottleneck=(
+            "Too much engineering attention is still being allocated "
+            "toward infrastructure instead of product wedge expansion."
+        ),
 
-METRICS:
-{metrics}
+        highest_leverage_focus=(
+            "Build structured AI operational intelligence systems "
+            "that reduce executive cognitive load."
+        ),
 
-Return:
-1. Operational summary
-2. Main bottleneck
-3. Highest leverage focus
-4. Elimination recommendation
-5. Execution recommendation
+        elimination_target=(
+            "Avoid premature multi-agent complexity and unnecessary "
+            "dashboard expansion."
+        ),
 
-Keep concise and executive-level.
-"""
-
-    return await generate_ai_response(
-        system_prompt="""
-You are an elite executive operational intelligence copilot.
-You optimize for leverage, execution, prioritization,
-operational compression, and strategic clarity.
-""",
-        user_prompt=prompt,
+        execution_recommendation=(
+            "Prioritize shipping the operational intelligence loop "
+            "before advanced orchestration systems."
+        ),
     )
