@@ -22,6 +22,7 @@ import { api } from "@/lib/api";
 import { ExecutiveCopilotPanel } from "@/components/copilot/executive-copilot-panel";
 import { PriorityIntelligencePanel } from "@/components/copilot/priority-intelligence-panel";
 import { AutonomousExecutionPanel } from "@/components/copilot/autonomous-execution-panel";
+import { ExecutionTimelinePanel } from "@/components/copilot/execution-timeline-panel";
 
 type RuntimeMetrics = {
   workflows: number;
@@ -242,6 +243,8 @@ export default function Home() {
               <PriorityIntelligencePanel />
 
               <AutonomousExecutionPanel />
+
+              <ExecutionTimelinePanel />
             </div>
 <section className="grid grid-cols-2 xl:grid-cols-6 gap-5 mb-10">
               <MetricCard
@@ -482,6 +485,7 @@ function WorkspacePlaceholder({
     </div>
   );
 }
+
 
 
 
