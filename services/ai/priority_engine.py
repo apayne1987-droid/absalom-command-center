@@ -1,4 +1,15 @@
+from typing import TypedDict
+
 from services.schemas.priority import PriorityItem
+
+
+class RawPriorityItem(TypedDict):
+    title: str
+    roi_score: int
+    leverage_score: int
+    automation_score: int
+    strategic_alignment_score: int
+    difficulty_score: int
 
 
 def calculate_priority_score(
@@ -20,7 +31,7 @@ def calculate_priority_score(
 
 def get_priority_items() -> list[PriorityItem]:
 
-    raw_items = [
+    raw_items: list[RawPriorityItem] = [
         {
             "title": "Build operational memory layer",
             "roi_score": 9,
@@ -58,7 +69,7 @@ def get_priority_items() -> list[PriorityItem]:
         },
     ]
 
-    results = []
+    results: list[PriorityItem] = []
 
     for item in raw_items:
 
