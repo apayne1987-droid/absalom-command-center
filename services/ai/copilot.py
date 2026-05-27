@@ -1,32 +1,51 @@
-from services.schemas.copilot import ExecutiveBriefing
+from services.ai.client import client
+from services.config.settings import settings
 
 
-async def generate_executive_briefing() -> ExecutiveBriefing:
-    return ExecutiveBriefing(
-        summary=(
-            "Current operational momentum is strong. "
-            "Infrastructure stability has significantly improved. "
-            "The highest priority is now product differentiation and "
-            "execution compression."
-        ),
+async def generate_executive_briefing(
+    priorities: list[str],
+    metrics: dict[str, int | None],
+) -> str:
+    if not settings.openai_api_key:
+        return (
+            "AI Executive Copilot is configured, but OPENAI_API_KEY is missing. "
+            "Add it to .env, rebuild Docker, and retry."
+        )
 
-        main_bottleneck=(
-            "Too much engineering attention is still being allocated "
-            "toward infrastructure instead of product wedge expansion."
-        ),
+    prompt = f"""
+You are the AI Executive Copilot for ABSALOM OS.
 
-        highest_leverage_focus=(
-            "Build structured AI operational intelligence systems "
-            "that reduce executive cognitive load."
-        ),
+Analyze the current operational state.
 
-        elimination_target=(
-            "Avoid premature multi-agent complexity and unnecessary "
-            "dashboard expansion."
-        ),
+PRIORITIES:
+{priorities}
 
-        execution_recommendation=(
-            "Prioritize shipping the operational intelligence loop "
-            "before advanced orchestration systems."
-        ),
+METRICS:
+{metrics}
+
+Return a concise executive briefing with:
+1. Operational Summary
+2. Main Bottleneck
+3. Highest Leverage Focus
+4. Kill / Elimination Recommendation
+5. Execution Recommendation
+
+Do not be motivational. Be strategic, direct, and useful.
+"""
+
+    response = await client.chat.completions.create(
+        model=settings.ai_default_model,
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an elite executive operations advisor.",
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ],
+        temperature=0.4,
     )
+
+    return response.choices[0].message.content or "No response generated."

@@ -7,6 +7,7 @@ from apps.api.routes.protected_routes import router as protected_router
 from apps.api.routes.websocket_routes import router as websocket_router
 from apps.api.routes.executive_routes import router as executive_router
 from apps.api.routes.copilot_routes import router as copilot_router
+from apps.api.routes.kill_queue_routes import router as kill_queue_router
 from apps.api.routes.priority_routes import router as priority_router
 from apps.api.routes.autonomy_routes import router as autonomy_router
 
@@ -41,6 +42,7 @@ app.include_router(protected_router)
 app.include_router(websocket_router)
 app.include_router(executive_router)
 app.include_router(copilot_router)
+app.include_router(kill_queue_router)
 app.include_router(priority_router)
 app.include_router(autonomy_router)
 app.include_router(workflow_router)
@@ -77,6 +79,7 @@ async def runtime_status():
         "version": settings.app_version,
         "environment": settings.environment,
     }
+
 
 
 
