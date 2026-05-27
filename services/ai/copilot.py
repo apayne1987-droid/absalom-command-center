@@ -1,4 +1,4 @@
-from services.ai.client import client
+from services.ai.client import get_openai_client
 from services.config.settings import settings
 
 
@@ -6,10 +6,13 @@ async def generate_executive_briefing(
     priorities: list[str],
     metrics: dict[str, int | None],
 ) -> str:
-    if not settings.openai_api_key:
+    client = get_openai_client()
+
+    if client is None:
         return (
-            "AI Executive Copilot is configured, but OPENAI_API_KEY is missing. "
-            "Add it to .env, rebuild Docker, and retry."
+            "AI Executive Copilot is installed and routed correctly, but "
+            "OPENAI_API_KEY is missing. Add it to .env and rebuild Docker "
+            "to enable live AI briefings."
         )
 
     prompt = f"""
