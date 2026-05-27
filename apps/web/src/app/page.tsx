@@ -11,18 +11,16 @@ import {
   Cpu,
   DollarSign,
   Layers3,
+  Loader2,
   LogOut,
   RefreshCw,
   Shield,
+  Sparkles,
   Workflow,
   XCircle,
 } from "lucide-react";
 
 import { api } from "@/lib/api";
-import { ExecutiveCopilotPanel } from "@/components/copilot/executive-copilot-panel";
-import { PriorityIntelligencePanel } from "@/components/copilot/priority-intelligence-panel";
-import { AutonomousExecutionPanel } from "@/components/copilot/autonomous-execution-panel";
-import { ExecutionTimelinePanel } from "@/components/copilot/execution-timeline-panel";
 
 type RuntimeMetrics = {
   workflows: number;
@@ -55,30 +53,12 @@ type Workspace =
   | "Infrastructure";
 
 const navigation = [
-  {
-    title: "Executive Core" as Workspace,
-    icon: Brain,
-  },
-  {
-    title: "Execution OS" as Workspace,
-    icon: ClipboardList,
-  },
-  {
-    title: "AI Systems" as Workspace,
-    icon: Cpu,
-  },
-  {
-    title: "Revenue Engine" as Workspace,
-    icon: DollarSign,
-  },
-  {
-    title: "Dev Forge" as Workspace,
-    icon: Layers3,
-  },
-  {
-    title: "Infrastructure" as Workspace,
-    icon: Shield,
-  },
+  { title: "Executive Core" as Workspace, icon: Brain },
+  { title: "Execution OS" as Workspace, icon: ClipboardList },
+  { title: "AI Systems" as Workspace, icon: Cpu },
+  { title: "Revenue Engine" as Workspace, icon: DollarSign },
+  { title: "Dev Forge" as Workspace, icon: Layers3 },
+  { title: "Infrastructure" as Workspace, icon: Shield },
 ];
 
 export default function Home() {
@@ -90,23 +70,33 @@ export default function Home() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [metrics, setMetrics] = useState<RuntimeMetrics | null>(null);
   const [priorities, setPriorities] = useState<ExecutivePriority[]>([]);
+  const [copilotBriefing, setCopilotBriefing] = useState("");
+  const [copilotLoading, setCopilotLoading] = useState(false);
   const [loading, setLoading] = useState(true);
 
   async function loadDashboard() {
-    const [
-      userResponse,
-      metricsResponse,
-      prioritiesResponse,
-    ] = await Promise.all([
-      api.get("/protected/me"),
-      api.get("/metrics/runtime"),
-      api.get("/executive/priorities"),
-    ]);
+    const [userResponse, metricsResponse, prioritiesResponse] =
+      await Promise.all([
+        api.get("/protected/me"),
+        api.get("/metrics/runtime"),
+        api.get("/executive/priorities"),
+      ]);
 
     setUser(userResponse.data);
     setMetrics(metricsResponse.data);
     setPriorities(prioritiesResponse.data);
     setLoading(false);
+  }
+
+  async function generateCopilotBriefing() {
+    setCopilotLoading(true);
+
+    try {
+      const response = await api.get("/copilot/briefing");
+      setCopilotBriefing(response.data.summary);
+    } finally {
+      setCopilotLoading(false);
+    }
   }
 
   function logout() {
@@ -159,7 +149,6 @@ export default function Home() {
         <nav className="mt-10 flex-1 space-y-2">
           {navigation.map((item) => {
             const Icon = item.icon;
-
             const active = activeWorkspace === item.title;
 
             return (
@@ -197,9 +186,7 @@ export default function Home() {
         </nav>
 
         <div className="border-t border-zinc-900 pt-5">
-          <div className="text-sm text-zinc-400 mb-3">
-            {user?.email}
-          </div>
+          <div className="text-sm text-zinc-400 mb-3">{user?.email}</div>
 
           <button
             onClick={logout}
@@ -237,54 +224,16 @@ export default function Home() {
 
         {activeWorkspace === "Executive Core" && (
           <>
-            <div className="mb-8">
-              <ExecutiveCopilotPanel />
-
-              <PriorityIntelligencePanel />
-
-              <AutonomousExecutionPanel />
-
-              <ExecutionTimelinePanel />
-            </div>
-<section className="grid grid-cols-2 xl:grid-cols-6 gap-5 mb-10">
-              <MetricCard
-                title="Workflows"
-                value={metrics.workflows}
-                icon={<Workflow size={20} />}
-              />
-
-              <MetricCard
-                title="Tasks"
-                value={metrics.tasks}
-                icon={<ClipboardList size={20} />}
-              />
-
-              <MetricCard
-                title="Execution Logs"
-                value={metrics.execution_logs}
-                icon={<Activity size={20} />}
-              />
-
-              <MetricCard
-                title="Completed"
-                value={metrics.completed_tasks}
-                icon={<CheckCircle size={20} />}
-              />
-
-              <MetricCard
-                title="Failed"
-                value={metrics.failed_tasks}
-                icon={<XCircle size={20} />}
-              />
-
-              <MetricCard
-                title="Active"
-                value={metrics.active_tasks}
-                icon={<Cpu size={20} />}
-              />
+            <section className="grid grid-cols-2 xl:grid-cols-6 gap-5 mb-10">
+              <MetricCard title="Workflows" value={metrics.workflows} icon={<Workflow size={20} />} />
+              <MetricCard title="Tasks" value={metrics.tasks} icon={<ClipboardList size={20} />} />
+              <MetricCard title="Execution Logs" value={metrics.execution_logs} icon={<Activity size={20} />} />
+              <MetricCard title="Completed" value={metrics.completed_tasks} icon={<CheckCircle size={20} />} />
+              <MetricCard title="Failed" value={metrics.failed_tasks} icon={<XCircle size={20} />} />
+              <MetricCard title="Active" value={metrics.active_tasks} icon={<Cpu size={20} />} />
             </section>
 
-            <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-8">
+            <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-8 mb-8">
               <div className="bg-[#111113] border border-zinc-900 rounded-[28px] p-8">
                 <div className="flex items-center justify-between mb-8">
                   <div>
@@ -370,6 +319,52 @@ export default function Home() {
                 />
               </div>
             </section>
+
+            <section className="bg-[#111113] border border-zinc-900 rounded-[28px] p-8">
+              <div className="flex items-start justify-between gap-8 mb-8">
+                <div>
+                  <div className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-3">
+                    AI Executive Copilot
+                  </div>
+
+                  <h3 className="text-3xl font-semibold">
+                    Operational Briefing
+                  </h3>
+
+                  <p className="text-zinc-500 mt-3 max-w-2xl leading-relaxed">
+                    Generate a concise AI analysis of current priorities,
+                    runtime state, bottlenecks, elimination opportunities, and
+                    highest-leverage execution focus.
+                  </p>
+                </div>
+
+                <button
+                  onClick={generateCopilotBriefing}
+                  disabled={copilotLoading}
+                  className="bg-white text-black px-5 py-3 rounded-2xl font-semibold flex items-center gap-2 disabled:opacity-60"
+                >
+                  {copilotLoading ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={18} />
+                  )}
+                  Generate Briefing
+                </button>
+              </div>
+
+              <div className="rounded-3xl border border-zinc-900 bg-black/40 p-6 min-h-[220px]">
+                {copilotBriefing ? (
+                  <pre className="whitespace-pre-wrap text-zinc-300 leading-relaxed font-sans text-sm">
+                    {copilotBriefing}
+                  </pre>
+                ) : (
+                  <div className="text-zinc-600 leading-relaxed">
+                    No briefing generated yet. Click Generate Briefing to
+                    activate the AI Executive Copilot.
+                  </div>
+                )}
+              </div>
+            </section>
           </>
         )}
 
@@ -430,9 +425,7 @@ function MetricCard({
         <div className="text-zinc-600">{icon}</div>
       </div>
 
-      <div className="text-4xl font-semibold tracking-tight">
-        {value}
-      </div>
+      <div className="text-4xl font-semibold tracking-tight">{value}</div>
     </div>
   );
 }
@@ -452,22 +445,14 @@ function SystemPanel({
         {title}
       </div>
 
-      <div className="text-3xl font-semibold leading-tight mb-4">
-        {value}
-      </div>
+      <div className="text-3xl font-semibold leading-tight mb-4">{value}</div>
 
-      <p className="text-zinc-500 leading-relaxed">
-        {subtitle}
-      </p>
+      <p className="text-zinc-500 leading-relaxed">{subtitle}</p>
     </div>
   );
 }
 
-function WorkspacePlaceholder({
-  workspace,
-}: {
-  workspace: Workspace;
-}) {
+function WorkspacePlaceholder({ workspace }: { workspace: Workspace }) {
   return (
     <div className="bg-[#111113] border border-zinc-900 rounded-[28px] p-10">
       <div className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-4">
@@ -485,8 +470,3 @@ function WorkspacePlaceholder({
     </div>
   );
 }
-
-
-
-
-
