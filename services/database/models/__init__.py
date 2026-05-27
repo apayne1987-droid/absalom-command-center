@@ -13,3 +13,5 @@ __all__ = [
     "User",
     "Workflow",
 ]
+
+from services.database.models.runtime_trace import RuntimeTraceRecord
