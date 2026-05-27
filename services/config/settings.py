@@ -2,6 +2,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    openai_api_key: str = ""
+    ai_default_model: str = "gpt-4.1-mini"
+    sentry_dsn: str = ""
+    posthog_api_key: str = ""
     ENVIRONMENT: str = "development"
 
     APP_NAME: str = "ABSALOM OS"
@@ -41,4 +45,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings.model_validate({})
+
 
